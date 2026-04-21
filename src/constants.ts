@@ -1,6 +1,1 @@
-export type SupportedChain =
-  | 'base'
-  | 'ethereum'
-  | 'arbitrum'
-  | 'polygon'
-  | 'base-sepolia'
+export type SupportedChain = 'base' | 'ethereum' | 'arbitrum' | 'polygon' | 'base-sepolia'
