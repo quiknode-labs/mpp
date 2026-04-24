@@ -71,3 +71,27 @@ test('createHashCredential uses explicit rpcUrl when provided', async () => {
     `expected only requests to custom.example, got: ${seenUrls.join(', ')}`,
   )
 })
+
+test('createHashCredential treats empty-string rpcUrl as user-supplied (no default fallback)', async () => {
+  // Guard against an inconsistency bug: a truthy check on rpcUrl would fall back to the
+  // default public endpoint for '' while a strict-undefined check on the transport path
+  // would use plain http() — sending default-endpoint traffic without telemetry / 429
+  // handling. Assert '' stays as '' on both paths.
+  try {
+    await createHashCredential({
+      account: TEST_ACCOUNT,
+      rpcUrl: '',
+      chainId: 8453,
+      tokenAddress: '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913',
+      recipient: '0x1111111111111111111111111111111111111111',
+      amount: 1n,
+    })
+  } catch {
+    // Expected — '' isn't a real URL; viem throws early. We only care what URL was attempted.
+  }
+
+  assert.ok(
+    !seenUrls.some((u) => u.includes('quiknode.pro')),
+    `empty-string rpcUrl must not resolve to the default public endpoint, got: ${seenUrls.join(', ')}`,
+  )
+})

@@ -24,15 +24,15 @@ export async function createHashCredential(parameters: {
   if (!chain) throw new Error(`Unsupported chainId: ${chainId}`)
 
   const supported = chainIdToSupported(chainId)
+  const useDefault = rpcUrl === undefined
   const resolvedRpcUrl = (() => {
-    if (rpcUrl) return rpcUrl
+    if (!useDefault) return rpcUrl
     if (!supported) {
       throw new Error(`Unsupported chainId ${chainId} for zero-config RPC; pass rpcUrl explicitly.`)
     }
     return defaultRpcUrl(supported)
   })()
 
-  const useDefault = rpcUrl === undefined
   const transport =
     useDefault && supported ? defaultTransport(resolvedRpcUrl, supported) : http(resolvedRpcUrl)
 
