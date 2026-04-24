@@ -90,3 +90,27 @@ test('defaultRpcUrl produces a well-formed URL for every chain', () => {
     assert.match(url, /^https:\/\//, `${chain} URL is HTTPS`)
   }
 })
+
+test('avalanche URL appends /ext/bc/C/rpc path suffix (C-Chain access)', () => {
+  const url = defaultRpcUrl('avalanche')
+  assert.ok(
+    url.endsWith('/ext/bc/C/rpc'),
+    `expected avalanche URL to end with /ext/bc/C/rpc, got: ${url}`,
+  )
+})
+
+test('chains without a path suffix do not get one appended', () => {
+  for (const chain of [
+    'base',
+    'ethereum',
+    'arbitrum',
+    'polygon',
+    'optimism',
+    'linea',
+    'unichain',
+    'base-sepolia',
+  ] as const) {
+    const url = defaultRpcUrl(chain)
+    assert.doesNotMatch(url, /\/ext\/bc\//, `${chain} should not have Avalanche C-Chain suffix`)
+  }
+})

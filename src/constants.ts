@@ -28,7 +28,7 @@ export const USDC_CONTRACTS: Record<SupportedChain, `0x${string}`> = {
   ethereum: '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48',
   arbitrum: '0xaf88d065e77c8cC2239327C5EDb3A432268e5831',
   polygon: '0x3c499c542cEF5E3811e1192ce70d8cC03d5c3359',
-  optimism: '0x0b2c639C33960ef9a1e57EF1024B17ae6E0e6f1d',
+  optimism: '0x0b2C639c533813f4Aa9D7837CAf62653d097Ff85',
   avalanche: '0xB97EF9Ef8734C71904D8002F8b6Bc66Dd9c48a6E',
   linea: '0x176211869cA2b568f2A7D4EE941E073a821EE1ff',
   unichain: '0x078D782b760474a361dDA0AF3839290b0EF57AD6',
@@ -97,10 +97,29 @@ export const CHAIN_SLUGS: Record<SupportedChain, string | null> = {
   'base-sepolia': 'base-sepolia',
 }
 
+/**
+ * Chain-specific path suffix appended after the token. Most chains expose
+ * EVM JSON-RPC at the token root; Avalanche is an AvalancheGo node where
+ * C-Chain (the EVM) lives at /ext/bc/C/rpc.
+ */
+export const CHAIN_PATH_SUFFIXES: Partial<Record<SupportedChain, string>> = {
+  avalanche: '/ext/bc/C/rpc',
+}
+
+/**
+ * Known QuickNode path suffixes for chains not yet in `SupportedChain`.
+ * Keep these wired up so adding the chain later is a one-line change in
+ * `CHAIN_PATH_SUFFIXES`. Not referenced by runtime code today.
+ */
+export const HYPE_SUFFIX = '/evm'
+export const TRON_SUFFIX = '/jsonrpc'
+export const FUEL_SUFFIX = '/v1/graphql'
+
 export function defaultRpcUrl(chain: SupportedChain): string {
   const slug = CHAIN_SLUGS[chain]
   const host = slug
     ? `${PUBLIC_RPC_PREFIX}.${slug}.quiknode.pro`
     : `${PUBLIC_RPC_PREFIX}.quiknode.pro`
-  return `https://${host}/${PUBLIC_RPC_TOKEN}`
+  const pathSuffix = CHAIN_PATH_SUFFIXES[chain] ?? ''
+  return `https://${host}/${PUBLIC_RPC_TOKEN}${pathSuffix}`
 }
