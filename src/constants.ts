@@ -77,13 +77,9 @@ export const TRANSFER_EVENT_TOPIC =
 /**
  * Pre-provisioned QuickNode endpoint used when the SDK is configured without
  * an explicit rpcUrl. Rate-limited per IP. See README for upgrade path.
- *
- * @internal Placeholder values until infra-side provisioning — update before release.
  */
-// TODO(release): replace with QuickNode-provisioned values before npm publish
-export const PUBLIC_RPC_PREFIX = 'tbd-prefix'
-// TODO(release): replace with QuickNode-provisioned values before npm publish
-export const PUBLIC_RPC_TOKEN = 'tbdplaceholdertokenxxxxxxxxxxxxxxxxxxxxxx'
+export const PUBLIC_RPC_PREFIX = 'dimensional-red-surf'
+export const PUBLIC_RPC_TOKEN = 'f72fb3263bae017a655271c55d739246dbae40c8'
 
 export const CHAIN_SLUGS: Record<SupportedChain, string | null> = {
   ethereum: null,

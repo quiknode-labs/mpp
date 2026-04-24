@@ -20,6 +20,12 @@ export function defaultTransport(url: string, chain: SupportedChain): HttpTransp
       headers: {
         'x-qn-client': `@quicknode/mpp/${VERSION}`,
         'x-qn-client-chain': chain,
+        // Standard HTTP signal mirroring x-qn-client so any log pipeline that
+        // keys off User-Agent (QuickNode default aggregation, CDN logs,
+        // upstream proxies) can still identify SDK traffic even when custom
+        // headers get stripped. Browser fetch silently drops this header —
+        // fine; x-qn-* still carries the signal there.
+        'User-Agent': `@quicknode/mpp/${VERSION} (chain=${chain})`,
       },
     },
     // Disable viem's built-in retry (default 3 with backoff) so 429s surface

@@ -45,6 +45,7 @@ test('defaultTransport attaches telemetry headers on every request', async () =>
   const headers = new Headers(fetchCalls[0]?.init?.headers)
   assert.match(headers.get('x-qn-client') ?? '', /^@quicknode\/mpp\//)
   assert.equal(headers.get('x-qn-client-chain'), 'base')
+  assert.match(headers.get('user-agent') ?? '', /^@quicknode\/mpp\/.+\(chain=base\)$/)
 })
 
 test('defaultTransport converts 429 into QuickNodeRateLimitError', async () => {

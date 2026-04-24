@@ -63,4 +63,5 @@ test('user-supplied rpcUrl: no x-qn-client telemetry headers are injected', asyn
   const headers = new Headers(fetchCalls[0]?.init?.headers)
   assert.equal(headers.get('x-qn-client'), null, 'no x-qn-client header leaked')
   assert.equal(headers.get('x-qn-client-chain'), null, 'no x-qn-client-chain header leaked')
+  assert.equal(headers.get('user-agent'), null, 'no User-Agent override leaked')
 })
