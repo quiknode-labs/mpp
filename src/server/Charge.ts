@@ -4,11 +4,13 @@ import { getAddress } from 'viem'
 import {
   CHAIN_IDS,
   DEFAULT_CONFIRMATIONS,
+  defaultRpcUrl,
   ERC20_ABI,
   PERMIT2_ADDRESS,
   USDC_CONTRACTS,
 } from '../constants.js'
 import { resolveSigner } from '../internal/account.js'
+import { logDefaultTransportOnce } from '../internal/transport.js'
 import { charge as chargeMethod } from '../Methods.js'
 import {
   type AuthorizationPayload,
@@ -64,9 +66,25 @@ export function charge(parameters: ServerParameters) {
   }
   const submitterAccount = submitter ? resolveSigner(submitter) : undefined
 
-  const publicClient = getPublicClient({ chain, rpcUrl })
+  const resolvedRpcUrl = rpcUrl ?? defaultRpcUrl(chain)
+  const useDefaultTransport = rpcUrl === undefined
+
+  if (useDefaultTransport) {
+    logDefaultTransportOnce(chain)
+  }
+
+  const publicClient = getPublicClient({
+    chain,
+    rpcUrl: resolvedRpcUrl,
+    useDefaultTransport,
+  })
   const walletClient = submitterAccount
-    ? getWalletClient({ chain, rpcUrl, account: submitterAccount })
+    ? getWalletClient({
+        chain,
+        rpcUrl: resolvedRpcUrl,
+        account: submitterAccount,
+        useDefaultTransport,
+      })
     : undefined
 
   let tokenMetadata: Promise<{ name: string; version: string }> | undefined

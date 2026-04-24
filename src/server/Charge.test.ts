@@ -41,3 +41,34 @@ test('charge() with only hash credential type requires no submitter', () => {
   assert.equal(method.name, 'evm')
   assert.equal(method.intent, 'charge')
 })
+
+test('charge() accepts zero-config with no rpcUrl when credentialTypes is [hash]', () => {
+  const method = charge({
+    recipient: RECIPIENT,
+    chain: 'base',
+    credentialTypes: ['hash'],
+  })
+  assert.equal(method.name, 'evm')
+  assert.equal(method.intent, 'charge')
+})
+
+test('charge() accepts zero-config with no rpcUrl when submitter is provided', () => {
+  const SUBMITTER = '0x0000000000000000000000000000000000000000000000000000000000000001' as const
+  const method = charge({
+    recipient: RECIPIENT,
+    chain: 'base',
+    submitter: { privateKey: SUBMITTER },
+  })
+  assert.equal(method.name, 'evm')
+  assert.equal(method.intent, 'charge')
+})
+
+test('charge() accepts explicit rpcUrl (existing behavior preserved)', () => {
+  const method = charge({
+    recipient: RECIPIENT,
+    chain: 'base',
+    rpcUrl: 'https://custom.example/rpc',
+    credentialTypes: ['hash'],
+  })
+  assert.equal(method.name, 'evm')
+})

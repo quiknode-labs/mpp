@@ -67,9 +67,6 @@ export function charge(parameters: ClientParameters) {
       const source = `did:pkh:eip155:${chainId}:${account.address}`
 
       if (chosen === 'hash') {
-        if (!rpcUrl) {
-          throw new Error('evm.charge requires `rpcUrl` when using the `hash` credential type')
-        }
         const payload = await createHashCredential({
           account,
           rpcUrl,

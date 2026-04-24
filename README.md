@@ -27,8 +27,7 @@ const mppx = Mppx.create({
     evm.charge({
       recipient: '0xMerchantWallet',
       chain: 'base',
-      rpcUrl: process.env.QUICKNODE_RPC!,
-      submitter: { privateKey: process.env.SUBMITTER_PK! }, // funds permit2/authorization gas
+      submitter: { privateKey: process.env.SUBMITTER_PK! },
     }),
   ],
   secretKey: process.env.MPP_SECRET_KEY!,
@@ -37,13 +36,15 @@ const mppx = Mppx.create({
 // mppx.evm.charge({ amount: '0.01', decimals: 6 })(request) → 402 challenge or verified receipt
 ```
 
+No `rpcUrl`? The SDK uses QuickNode's shared public endpoint for the chosen chain. Good for local dev and low-volume workloads. When you start seeing `QuickNodeRateLimitError`, upgrade at [quicknode.com](https://www.quicknode.com/?utm_source=mpp-sdk) and pass your dedicated endpoint via `rpcUrl`.
+
 Scope accepted types per-server:
 
 ```ts
 evm.charge({
   recipient,
   chain: 'base',
-  rpcUrl,
+  rpcUrl, // optional override; omit to use public endpoint
   credentialTypes: ['permit2', 'authorization'], // drop 'hash' if you don't want client-paid flows
   submitter: { privateKey: SUBMITTER_PK },
 })
@@ -77,6 +78,24 @@ evm.charge({
 })
 ```
 
+## Rate limits
+
+The default public RPC is rate-limited per IP. When the limit is exceeded, the SDK throws `QuickNodeRateLimitError`:
+
+```ts
+import { QuickNodeRateLimitError } from '@quicknode/mpp/server'
+
+try {
+  await mppx.evm.charge(/* ... */)
+} catch (err) {
+  if (err instanceof QuickNodeRateLimitError) {
+    console.error(`Rate limited on ${err.chain}. Upgrade: ${err.upgradeUrl}`)
+  }
+}
+```
+
+To avoid the limit entirely, pass your own `rpcUrl` from any QuickNode plan.
+
 ## Configuration
 
 ### `evm.charge` (server)
@@ -84,8 +103,8 @@ evm.charge({
 | Option | Required | Default | Notes |
 |---|---|---|---|
 | `recipient` | ✓ | — | Merchant wallet (receives USDC) |
-| `chain` | ✓ | — | `'base' \| 'ethereum' \| 'arbitrum' \| 'polygon' \| 'base-sepolia'` |
-| `rpcUrl` | ✓ | — | QuickNode endpoint for reads + submitter writes |
+| `chain` | ✓ | — | `'base' \| 'ethereum' \| 'arbitrum' \| 'polygon' \| 'optimism' \| 'avalanche' \| 'linea' \| 'unichain' \| 'base-sepolia'` |
+| `rpcUrl` | — | — | Defaults to QuickNode public endpoint for the chain. Rate-limited per IP. |
 | `submitter` | when `credentialTypes` contains `permit2`/`authorization` | — | `{ privateKey }` or `{ account }` |
 | `credentialTypes` | | `['permit2','authorization','hash']` | Draft-ordered preference list |
 | `token` | | `'USDC'` | Only USDC supported in v0.1 |
@@ -125,7 +144,20 @@ export RECIPIENT=0x...
 npx tsx scripts/live-sepolia.ts --type hash
 npx tsx scripts/live-sepolia.ts --type authorization
 npx tsx scripts/live-sepolia.ts --type permit2
+
+# Or use the zero-config path (no RPC_URL env needed):
+npx tsx scripts/live-sepolia.ts --type hash --use-default-rpc
 ```
+
+### Integration tests (opt-in)
+
+A read-only sanity check against the default public endpoint is gated behind an env var:
+
+```bash
+MPP_INTEGRATION=1 npm test -- --test-name-pattern "public rpc"
+```
+
+Runs one `getChainId` call per supported chain. Requires real `PUBLIC_RPC_PREFIX`/`PUBLIC_RPC_TOKEN` values in `src/constants.ts`.
 
 ## License
 

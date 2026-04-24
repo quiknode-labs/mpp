@@ -33,7 +33,7 @@ import { baseSepolia } from 'viem/chains'
 import { createAuthorizationCredential } from '../src/client/authorization.js'
 import { createHashCredential } from '../src/client/hash.js'
 import { createPermit2Credential } from '../src/client/permit2.js'
-import { CHAIN_IDS, ERC20_ABI, USDC_CONTRACTS } from '../src/constants.js'
+import { CHAIN_IDS, ERC20_ABI, USDC_CONTRACTS, defaultRpcUrl } from '../src/constants.js'
 import type { ChargeStore } from '../src/server/replay.js'
 import { verifyAuthorization } from '../src/server/verifiers/authorization.js'
 import { verifyHash } from '../src/server/verifiers/hash.js'
@@ -45,13 +45,19 @@ if (!type || !['hash', 'authorization', 'permit2'].includes(type)) {
   process.exit(1)
 }
 
+const useDefaultRpc = process.argv.includes('--use-default-rpc')
+
 const RPC_URL = process.env.RPC_URL
 const PAYER_PK = process.env.PAYER_PK as Hex | undefined
 const SUBMITTER_PK = process.env.SUBMITTER_PK as Hex | undefined
 const RECIPIENT = process.env.RECIPIENT as Hex | undefined
 
-if (!RPC_URL || !PAYER_PK || !RECIPIENT) {
-  console.error('Missing env: RPC_URL, PAYER_PK, RECIPIENT required.')
+if (!PAYER_PK || !RECIPIENT) {
+  console.error('Missing env: PAYER_PK, RECIPIENT required.')
+  process.exit(1)
+}
+if (!useDefaultRpc && !RPC_URL) {
+  console.error('Missing env: RPC_URL required (or pass --use-default-rpc).')
   process.exit(1)
 }
 if (type !== 'hash' && !SUBMITTER_PK) {
@@ -62,6 +68,9 @@ if (type !== 'hash' && !SUBMITTER_PK) {
 const payer = privateKeyToAccount(PAYER_PK)
 const submitter = SUBMITTER_PK ? privateKeyToAccount(SUBMITTER_PK) : undefined
 
+const EFFECTIVE_RPC = useDefaultRpc ? defaultRpcUrl('base-sepolia') : (RPC_URL as string)
+console.log(`▶ RPC: ${useDefaultRpc ? 'QuickNode public (default)' : 'custom'}`)
+
 const CHAIN_ID = CHAIN_IDS['base-sepolia']
 const TOKEN = USDC_CONTRACTS['base-sepolia']
 const AMOUNT = 1000n // 0.001 USDC
@@ -71,7 +80,7 @@ const EXPIRES = new Date(Date.now() + 5 * 60_000).toISOString()
 
 const publicClient = createPublicClient({
   chain: baseSepolia,
-  transport: http(RPC_URL),
+  transport: http(EFFECTIVE_RPC),
 }) as unknown as PublicClient
 const store = Store.memory() as ChargeStore
 
@@ -81,7 +90,7 @@ if (type === 'hash') {
   console.log('▶ creating credential (client broadcasts)…')
   const payload = await createHashCredential({
     account: payer,
-    rpcUrl: RPC_URL,
+    rpcUrl: EFFECTIVE_RPC,
     chainId: CHAIN_ID,
     tokenAddress: TOKEN,
     recipient: RECIPIENT,
@@ -126,7 +135,7 @@ if (type === 'hash') {
   const walletClient = createWalletClient({
     account: submitter,
     chain: baseSepolia,
-    transport: http(RPC_URL),
+    transport: http(EFFECTIVE_RPC),
   }) as unknown as WalletClient
   const receipt = await verifyAuthorization({
     payload,
@@ -161,7 +170,7 @@ if (type === 'hash') {
   const walletClient = createWalletClient({
     account: submitter,
     chain: baseSepolia,
-    transport: http(RPC_URL),
+    transport: http(EFFECTIVE_RPC),
   }) as unknown as WalletClient
   const receipt = await verifyPermit2({
     payload,

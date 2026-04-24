@@ -40,8 +40,12 @@ export type ChargeReplayItemMap = {
 export type ServerParameters = {
   /** Merchant wallet that receives the USDC transfer. */
   recipient: Address
-  /** QuickNode (or other) RPC endpoint URL. */
-  rpcUrl: string
+  /**
+   * RPC endpoint URL. If omitted, defaults to QuickNode's public shared endpoint
+   * for the given `chain`. The shared endpoint is rate-limited per IP; upgrade
+   * at https://www.quicknode.com for a dedicated endpoint.
+   */
+  rpcUrl?: string
   /** Target chain for settlement. */
   chain: SupportedChain
   /** ERC-20 token symbol — resolves to a contract address via the chain's token map. @default 'USDC' */

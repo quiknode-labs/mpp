@@ -1,5 +1,15 @@
 import type { Chain } from 'viem'
-import { arbitrum, base, baseSepolia, mainnet, polygon } from 'viem/chains'
+import {
+  arbitrum,
+  avalanche,
+  base,
+  baseSepolia,
+  linea,
+  mainnet,
+  optimism,
+  polygon,
+  unichain,
+} from 'viem/chains'
 import type { SupportedChain } from '../constants.js'
 
 const chains: Record<SupportedChain, Chain> = {
@@ -7,6 +17,10 @@ const chains: Record<SupportedChain, Chain> = {
   ethereum: mainnet,
   arbitrum,
   polygon,
+  optimism,
+  avalanche,
+  linea,
+  unichain,
   'base-sepolia': baseSepolia,
 }
 
