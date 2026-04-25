@@ -24,13 +24,15 @@
     }
   },
   "scripts": {
+    "sync-version": "node scripts/sync-version.mjs",
+    "prebuild": "npm run sync-version",
     "build": "tsc -p tsconfig.build.json",
     "typecheck": "tsc --noEmit",
     "test": "node --import tsx/esm --test",
     "lint": "biome check src",
     "lint:fix": "biome check --write src",
     "format": "biome format --write src",
-    "verify": "npm run lint && npm run typecheck && npm run test && npm run build",
+    "verify": "npm run sync-version && npm run lint && npm run typecheck && npm run test && npm run build",
     "prepare": "simple-git-hooks && npm run build"
   },
   "simple-git-hooks": {
