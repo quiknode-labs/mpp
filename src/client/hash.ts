@@ -1,11 +1,19 @@
 import { type Account, createPublicClient, createWalletClient, type Hex, http } from 'viem'
-import { ERC20_ABI } from '../constants.js'
+import { CHAIN_IDS, defaultRpcUrl, ERC20_ABI, type SupportedChain } from '../constants.js'
 import { getViemChainById } from '../internal/chain.js'
+import { defaultTransport } from '../internal/transport.js'
 import type { HashPayload } from '../types.js'
+
+function chainIdToSupported(chainId: number): SupportedChain | undefined {
+  for (const [name, id] of Object.entries(CHAIN_IDS)) {
+    if (id === chainId) return name as SupportedChain
+  }
+  return undefined
+}
 
 export async function createHashCredential(parameters: {
   account: Account
-  rpcUrl: string
+  rpcUrl?: string
   chainId: number
   tokenAddress: Hex
   recipient: Hex
@@ -15,8 +23,21 @@ export async function createHashCredential(parameters: {
   const chain = getViemChainById(chainId)
   if (!chain) throw new Error(`Unsupported chainId: ${chainId}`)
 
-  const walletClient = createWalletClient({ account, chain, transport: http(rpcUrl) })
-  const publicClient = createPublicClient({ chain, transport: http(rpcUrl) })
+  const supported = chainIdToSupported(chainId)
+  const useDefault = rpcUrl === undefined
+  const resolvedRpcUrl = (() => {
+    if (!useDefault) return rpcUrl
+    if (!supported) {
+      throw new Error(`Unsupported chainId ${chainId} for zero-config RPC; pass rpcUrl explicitly.`)
+    }
+    return defaultRpcUrl(supported)
+  })()
+
+  const transport =
+    useDefault && supported ? defaultTransport(resolvedRpcUrl, supported) : http(resolvedRpcUrl)
+
+  const walletClient = createWalletClient({ account, chain, transport })
+  const publicClient = createPublicClient({ chain, transport })
 
   const txHash = await walletClient.writeContract({
     address: tokenAddress,

@@ -1,4 +1,5 @@
 export type { SupportedChain } from './constants.js'
+export { QuickNodeRateLimitError } from './errors.js'
 export { charge } from './Methods.js'
 export type {
   AuthorizationPayload,
