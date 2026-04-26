@@ -24,7 +24,7 @@
     }
   },
   "scripts": {
-    "sync-version": "node scripts/sync-version.mjs",
+    "sync-version": "genversion --esm --source ./package.json --force src/internal/version.ts",
     "prebuild": "npm run sync-version",
     "build": "tsc -p tsconfig.build.json",
     "typecheck": "tsc --noEmit",
@@ -47,6 +47,7 @@
   "devDependencies": {
     "@biomejs/biome": "^2.0.0",
     "@types/node": "^22.0.0",
+    "genversion": "^3.2.0",
     "mppx": ">=0.3.15",
     "simple-git-hooks": "^2.11.0",
     "tsx": "^4.0.0",
