@@ -1,7 +1,7 @@
 import { HttpRequestError, type HttpTransport, http } from 'viem'
 import type { SupportedChain } from '../constants.js'
 import { QuickNodeRateLimitError } from '../errors.js'
-import { VERSION } from './version.js'
+import { version } from './version.js'
 
 /**
  * Constructs a viem `http()` transport targeting the SDK's default public RPC.
@@ -18,14 +18,14 @@ export function defaultTransport(url: string, chain: SupportedChain): HttpTransp
   const inner = http(url, {
     fetchOptions: {
       headers: {
-        'x-qn-client': `@quicknode/mpp/${VERSION}`,
+        'x-qn-client': `@quicknode/mpp/${version}`,
         'x-qn-client-chain': chain,
         // Standard HTTP signal mirroring x-qn-client so any log pipeline that
         // keys off User-Agent (QuickNode default aggregation, CDN logs,
         // upstream proxies) can still identify SDK traffic even when custom
         // headers get stripped. Browser fetch silently drops this header —
         // fine; x-qn-* still carries the signal there.
-        'User-Agent': `@quicknode/mpp/${VERSION} (chain=${chain})`,
+        'User-Agent': `@quicknode/mpp/${version} (chain=${chain})`,
       },
     },
     // Disable viem's built-in retry (default 3 with backoff) so 429s surface
