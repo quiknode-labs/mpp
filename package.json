@@ -18,9 +18,41 @@
       "types": "./dist/client/index.d.ts",
       "default": "./dist/client/index.js"
     },
+    "./client/authorization": {
+      "types": "./dist/client/authorization.d.ts",
+      "default": "./dist/client/authorization.js"
+    },
+    "./client/hash": {
+      "types": "./dist/client/hash.d.ts",
+      "default": "./dist/client/hash.js"
+    },
+    "./client/permit2": {
+      "types": "./dist/client/permit2.d.ts",
+      "default": "./dist/client/permit2.js"
+    },
     "./server": {
       "types": "./dist/server/index.d.ts",
       "default": "./dist/server/index.js"
+    },
+    "./server/replay": {
+      "types": "./dist/server/replay.d.ts",
+      "default": "./dist/server/replay.js"
+    },
+    "./server/verifiers/authorization": {
+      "types": "./dist/server/verifiers/authorization.d.ts",
+      "default": "./dist/server/verifiers/authorization.js"
+    },
+    "./server/verifiers/hash": {
+      "types": "./dist/server/verifiers/hash.d.ts",
+      "default": "./dist/server/verifiers/hash.js"
+    },
+    "./server/verifiers/permit2": {
+      "types": "./dist/server/verifiers/permit2.d.ts",
+      "default": "./dist/server/verifiers/permit2.js"
+    },
+    "./constants": {
+      "types": "./dist/constants.d.ts",
+      "default": "./dist/constants.js"
     }
   },
   "scripts": {
