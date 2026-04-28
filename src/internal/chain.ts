@@ -1,13 +1,19 @@
 import type { Chain } from 'viem'
 import {
   arbitrum,
+  arbitrumSepolia,
   avalanche,
   base,
   baseSepolia,
   linea,
+  lineaSepolia,
   mainnet,
   optimism,
+  optimismSepolia,
   polygon,
+  polygonAmoy,
+  scrollSepolia,
+  sepolia,
   unichain,
 } from 'viem/chains'
 import type { SupportedChain } from '../constants.js'
@@ -22,6 +28,12 @@ const chains: Record<SupportedChain, Chain> = {
   linea,
   unichain,
   'base-sepolia': baseSepolia,
+  'ethereum-sepolia': sepolia,
+  'arbitrum-sepolia': arbitrumSepolia,
+  'optimism-sepolia': optimismSepolia,
+  'polygon-amoy': polygonAmoy,
+  'scroll-sepolia': scrollSepolia,
+  'linea-sepolia': lineaSepolia,
 }
 
 export function getViemChain(chain: SupportedChain): Chain {

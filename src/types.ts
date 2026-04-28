@@ -1,5 +1,5 @@
 import type { Account, Address, Hash, Hex } from 'viem'
-import type { SupportedChain } from './constants.js'
+import type { SupportedChain, SupportedToken } from './constants.js'
 
 export const credentialTypes = ['permit2', 'authorization', 'hash'] as const
 
@@ -48,8 +48,14 @@ export type ServerParameters = {
   rpcUrl?: string
   /** Target chain for settlement. */
   chain: SupportedChain
-  /** ERC-20 token symbol — resolves to a contract address via the chain's token map. @default 'USDC' */
-  token?: 'USDC'
+  /**
+   * ERC-20 token symbol — resolves to a contract address via TOKEN_CONTRACTS.
+   * Testnet token availability is sparse outside USDC: EURC ships only on
+   * ethereum-sepolia, WETH on a subset of testnets. Authorization (EIP-3009)
+   * is supported only by Circle's FiatToken family (USDC, EURC); WETH is
+   * permit2 + hash only. @default 'USDC'
+   */
+  token?: SupportedToken
   /**
    * Accepted credential types, advertised in the challenge. Ordered from most to
    * least preferred (draft-evm-charge-00 §3). @default ['permit2','authorization','hash']
