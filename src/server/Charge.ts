@@ -15,13 +15,12 @@ import {
 import { resolveSigner } from '../internal/account.js'
 import { logDefaultTransportOnce } from '../internal/transport.js'
 import { charge as chargeMethod } from '../Methods.js'
-import {
-  type AuthorizationPayload,
-  type CredentialType,
-  credentialTypes,
-  type HashPayload,
-  type Permit2Payload,
-  type ServerParameters,
+import type {
+  AuthorizationPayload,
+  CredentialType,
+  HashPayload,
+  Permit2Payload,
+  ServerParameters,
 } from '../types.js'
 import { getPublicClient, getWalletClient } from './rpc.js'
 import { verifyAuthorization } from './verifiers/authorization.js'
@@ -55,7 +54,6 @@ export function charge(parameters: ServerParameters) {
     store: storeInput,
     submitter,
   } = parameters
-  const acceptedTypes: readonly CredentialType[] = acceptedTypesInput ?? credentialTypes
   const tokenSymbol: SupportedToken = parameters.token ?? 'USDC'
   const tokenAddress = TOKEN_CONTRACTS[tokenSymbol]?.[chain]
   if (!tokenAddress) {
@@ -70,6 +68,11 @@ export function charge(parameters: ServerParameters) {
   }
   const tokenDecimals = TOKEN_DECIMALS[tokenSymbol]
   const allowedTypes = TOKEN_CREDENTIAL_TYPES[tokenSymbol]
+  // When the caller omits `credentialTypes`, default to the per-token allowed
+  // set rather than the universal one. Otherwise tokens like WETH and USDT —
+  // which lack EIP-3009 — would throw on every zero-config construction
+  // because the universal default includes 'authorization'.
+  const acceptedTypes: readonly CredentialType[] = acceptedTypesInput ?? allowedTypes
   const invalidTypes = acceptedTypes.filter((t) => !allowedTypes.includes(t))
   if (invalidTypes.length) {
     throw new Error(
