@@ -7,18 +7,20 @@ import {
   defaultRpcUrl,
   ERC20_ABI,
   PERMIT2_ADDRESS,
-  USDC_CONTRACTS,
+  type SupportedToken,
+  TOKEN_CONTRACTS,
+  TOKEN_CREDENTIAL_TYPES,
+  TOKEN_DECIMALS,
 } from '../constants.js'
 import { resolveSigner } from '../internal/account.js'
 import { logDefaultTransportOnce } from '../internal/transport.js'
 import { charge as chargeMethod } from '../Methods.js'
-import {
-  type AuthorizationPayload,
-  type CredentialType,
-  credentialTypes,
-  type HashPayload,
-  type Permit2Payload,
-  type ServerParameters,
+import type {
+  AuthorizationPayload,
+  CredentialType,
+  HashPayload,
+  Permit2Payload,
+  ServerParameters,
 } from '../types.js'
 import { getPublicClient, getWalletClient } from './rpc.js'
 import { verifyAuthorization } from './verifiers/authorization.js'
@@ -52,8 +54,32 @@ export function charge(parameters: ServerParameters) {
     store: storeInput,
     submitter,
   } = parameters
-  const acceptedTypes: readonly CredentialType[] = acceptedTypesInput ?? credentialTypes
-  const tokenAddress = USDC_CONTRACTS[chain]
+  const tokenSymbol: SupportedToken = parameters.token ?? 'USDC'
+  const tokenAddress = TOKEN_CONTRACTS[tokenSymbol]?.[chain]
+  if (!tokenAddress) {
+    const supportedOnChain = (Object.keys(TOKEN_CONTRACTS) as SupportedToken[])
+      .filter((t) => TOKEN_CONTRACTS[t][chain])
+      .join(', ')
+    throw new Error(
+      `${tokenSymbol} is not deployed on ${chain}. Supported tokens for this chain: ${
+        supportedOnChain || '(none)'
+      }`,
+    )
+  }
+  const tokenDecimals = TOKEN_DECIMALS[tokenSymbol]
+  const allowedTypes = TOKEN_CREDENTIAL_TYPES[tokenSymbol]
+  // When the caller omits `credentialTypes`, default to the per-token allowed
+  // set rather than the universal one. Otherwise tokens like WETH and USDT —
+  // which lack EIP-3009 — would throw on every zero-config construction
+  // because the universal default includes 'authorization'.
+  const acceptedTypes: readonly CredentialType[] = acceptedTypesInput ?? allowedTypes
+  const invalidTypes = acceptedTypes.filter((t) => !allowedTypes.includes(t))
+  if (invalidTypes.length) {
+    throw new Error(
+      `${tokenSymbol} does not support credential types: ${invalidTypes.join(', ')}. ` +
+        `Supported on ${tokenSymbol}: ${allowedTypes.join(', ')}.`,
+    )
+  }
   const chainId = CHAIN_IDS[chain]
   const confirmations = confirmationsInput ?? DEFAULT_CONFIRMATIONS[chain]
   const store = storeInput ?? (Store.memory() as NonNullable<ServerParameters['store']>)
@@ -111,7 +137,7 @@ export function charge(parameters: ServerParameters) {
   return Method.toServer(chargeMethod, {
     defaults: {
       currency: tokenAddress,
-      decimals: 6,
+      decimals: tokenDecimals,
       recipient,
     },
     async request({ request }) {
