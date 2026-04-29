@@ -74,14 +74,14 @@ export const DEFAULT_CONFIRMATIONS: Record<SupportedChain, number> = {
 
 export type SupportedToken = 'USDC' | 'EURC' | 'WETH' | 'USDT'
 
-// `Partial` because not every token is deployed on every chain. Admin layer
-// must reject creating a payment option for a (chain, token) pair that
-// resolves to undefined.
+// `Partial` because not every token is deployed on every chain. Callers
+// must handle a missing (chain, token) pair — `evm.charge` throws at
+// construction time when the resolved address is undefined.
 //
-// Provenance rule (see agent-proxy/docs/decisions.md): every entry must be
-// either issuer-deployed (Circle for USDC/EURC, Tether for mainnet USDT,
-// chain team for canonical WETH wrappers) or verified on-chain against a
-// known audited bytecode hash. Community-deployed tokens are not first-class.
+// Provenance rule for entries in this table: every address is either
+// issuer-deployed (Circle for USDC/EURC, Tether for mainnet USDT, the
+// canonical chain-team WETH wrapper) or verified on-chain. Community
+// deployments are not first-class — bring your own via `customToken`.
 //
 // WETH carve-out: only canonical native ETH wrappers are listed. Polygon
 // (native MATIC) and Avalanche (native AVAX) carry "WETH" only as bridged
@@ -140,6 +140,17 @@ export const TOKEN_CREDENTIAL_TYPES: Record<SupportedToken, readonly CredentialT
 }
 
 export const PERMIT2_ADDRESS: `0x${string}` = '0x000000000022D473030F116dDEE9F6B43aC78BA3'
+
+/**
+ * Sentinel address used in the `currency` field of an evm.charge challenge to
+ * signal a native chain coin transfer (ETH / MATIC / AVAX …). Pass it as
+ * `customToken.address` on the server to settle in the chain's native coin.
+ *
+ * Only the `hash` credential is supported for native settlement — Permit2 and
+ * EIP-3009 do not apply to native value transfers. This is a non-normative
+ * extension to draft-evm-charge-00, which scopes itself to ERC-20 transfers.
+ */
+export const NATIVE_TOKEN_ADDRESS: `0x${string}` = '0x0000000000000000000000000000000000000000'
 
 export const ERC20_ABI = parseAbi([
   'function transfer(address to, uint256 amount) returns (bool)',

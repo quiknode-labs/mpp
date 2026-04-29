@@ -1,5 +1,6 @@
 export type { SupportedChain, SupportedToken } from './constants.js'
 export {
+  NATIVE_TOKEN_ADDRESS,
   TOKEN_CONTRACTS,
   TOKEN_CREDENTIAL_TYPES,
   TOKEN_DECIMALS,
@@ -11,6 +12,7 @@ export type {
   ChargeCredential,
   ClientParameters,
   CredentialType,
+  CustomTokenConfig,
   HashPayload,
   Permit2Payload,
   ServerParameters,

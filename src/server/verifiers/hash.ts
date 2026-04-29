@@ -1,6 +1,6 @@
 import { Errors, Receipt } from 'mppx'
 import { getAddress, type PublicClient, parseEventLogs } from 'viem'
-import { ERC20_ABI } from '../../constants.js'
+import { ERC20_ABI, NATIVE_TOKEN_ADDRESS } from '../../constants.js'
 import type { HashPayload } from '../../types.js'
 import { type ChargeStore, hashKey, markUsed, releaseUse } from '../replay.js'
 
@@ -43,26 +43,43 @@ export async function verifyHash(parameters: {
       throw new Errors.VerificationFailedError({ reason: 'Transaction reverted on-chain' })
     }
 
-    const logs = parseEventLogs({
-      abi: ERC20_ABI,
-      eventName: 'Transfer',
-      logs: receipt.logs,
-    })
-
     const expectedToken = getAddress(currency)
     const expectedRecipient = getAddress(recipient)
     const expectedAmount = BigInt(amount)
 
-    const match = logs.find(
-      (log) =>
-        getAddress(log.address) === expectedToken &&
-        getAddress(log.args.to) === expectedRecipient &&
-        log.args.value === expectedAmount,
-    )
-    if (!match) {
-      throw new Errors.VerificationFailedError({
-        reason: 'No matching Transfer log in transaction',
+    if (expectedToken === getAddress(NATIVE_TOKEN_ADDRESS)) {
+      // Native chain coin: verify tx.to / tx.value directly. Restricted to
+      // direct EOA sends (`tx.input === '0x'`); contract-mediated native
+      // transfers are out of scope for this credential.
+      const tx = await client.getTransaction({ hash: txHash })
+      if (
+        !tx.to ||
+        getAddress(tx.to) !== expectedRecipient ||
+        tx.value !== expectedAmount ||
+        tx.input !== '0x'
+      ) {
+        throw new Errors.VerificationFailedError({
+          reason: 'Transaction does not match expected native transfer',
+        })
+      }
+    } else {
+      const logs = parseEventLogs({
+        abi: ERC20_ABI,
+        eventName: 'Transfer',
+        logs: receipt.logs,
       })
+
+      const match = logs.find(
+        (log) =>
+          getAddress(log.address) === expectedToken &&
+          getAddress(log.args.to) === expectedRecipient &&
+          log.args.value === expectedAmount,
+      )
+      if (!match) {
+        throw new Errors.VerificationFailedError({
+          reason: 'No matching Transfer log in transaction',
+        })
+      }
     }
 
     const latest = await client.getBlockNumber()
