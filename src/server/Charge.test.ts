@@ -147,6 +147,42 @@ test('charge() rejects authorization on a custom ERC-20 by default', () => {
   )
 })
 
+test('charge() throws when customToken.name is set without version', () => {
+  assert.throws(
+    () =>
+      charge({
+        recipient: RECIPIENT,
+        chain: 'ethereum',
+        rpcUrl: RPC,
+        submitter: { privateKey: SUBMITTER },
+        customToken: {
+          address: DAI_MAINNET,
+          decimals: 18,
+          name: 'Dai Stablecoin',
+        },
+      }),
+    /name and customToken\.version must be provided together/i,
+  )
+})
+
+test('charge() throws when customToken.version is set without name', () => {
+  assert.throws(
+    () =>
+      charge({
+        recipient: RECIPIENT,
+        chain: 'ethereum',
+        rpcUrl: RPC,
+        submitter: { privateKey: SUBMITTER },
+        customToken: {
+          address: DAI_MAINNET,
+          decimals: 18,
+          version: '1',
+        },
+      }),
+    /name and customToken\.version must be provided together/i,
+  )
+})
+
 test('charge() honors custom credentialTypes on a custom ERC-20 (opt-in authorization)', () => {
   const method = charge({
     recipient: RECIPIENT,

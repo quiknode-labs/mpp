@@ -82,6 +82,16 @@ export function charge(parameters: ServerParameters) {
           'Remove non-hash entries from credentialTypes.',
       )
     }
+    // EIP-712 domains use `name` AND `version` together. Allowing one
+    // override but not the other risks shipping a challenge with one field
+    // populated and the other silently dropped (e.g. when the on-chain
+    // probe for the missing field reverts), which fails verification at
+    // the client. Require both or neither.
+    if ((customToken.name === undefined) !== (customToken.version === undefined)) {
+      throw new Error(
+        'customToken.name and customToken.version must be provided together (or neither).',
+      )
+    }
     nameOverride = customToken.name
     versionOverride = customToken.version
   } else {
@@ -182,9 +192,11 @@ export function charge(parameters: ServerParameters) {
     async request({ request }) {
       // Caller-supplied overrides win over on-chain reads. Useful for tokens
       // whose `name()`/`version()` reverts or whose EIP-712 domain values
-      // differ from their ERC-20 metadata.
+      // differ from their ERC-20 metadata. `name` and `version` are
+      // validated as both-or-neither at construction, so checking one is
+      // sufficient to know whether overrides cover the full domain.
       const probeMetadata =
-        needsMetadata && !(nameOverride && versionOverride)
+        needsMetadata && nameOverride === undefined
           ? await getTokenMetadata().catch(() => undefined)
           : undefined
       return {
