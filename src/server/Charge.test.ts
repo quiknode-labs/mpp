@@ -147,6 +147,25 @@ test('charge() rejects authorization on a custom ERC-20 by default', () => {
   )
 })
 
+test('charge() throws when customToken.credentialTypes contains unknown values', () => {
+  assert.throws(
+    () =>
+      charge({
+        recipient: RECIPIENT,
+        chain: 'ethereum',
+        rpcUrl: RPC,
+        submitter: { privateKey: SUBMITTER },
+        customToken: {
+          address: DAI_MAINNET,
+          decimals: 18,
+          // biome-ignore lint/suspicious/noExplicitAny: simulate JS caller bypassing types
+          credentialTypes: ['permit2', 'lol-not-real'] as any,
+        },
+      }),
+    /unknown values: lol-not-real/i,
+  )
+})
+
 test('charge() throws when customToken.name is set without version', () => {
   assert.throws(
     () =>

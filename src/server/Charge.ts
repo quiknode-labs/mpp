@@ -16,12 +16,13 @@ import {
 import { resolveSigner } from '../internal/account.js'
 import { logDefaultTransportOnce } from '../internal/transport.js'
 import { charge as chargeMethod } from '../Methods.js'
-import type {
-  AuthorizationPayload,
-  CredentialType,
-  HashPayload,
-  Permit2Payload,
-  ServerParameters,
+import {
+  type AuthorizationPayload,
+  type CredentialType,
+  credentialTypes as canonicalCredentialTypes,
+  type HashPayload,
+  type Permit2Payload,
+  type ServerParameters,
 } from '../types.js'
 import { getPublicClient, getWalletClient } from './rpc.js'
 import { verifyAuthorization } from './verifiers/authorization.js'
@@ -75,6 +76,17 @@ export function charge(parameters: ServerParameters) {
     tokenLabel = customToken.symbol ?? tokenAddress
     isNative = tokenAddress === getAddress(NATIVE_TOKEN_ADDRESS)
     const defaults: readonly CredentialType[] = isNative ? ['hash'] : ['permit2', 'hash']
+    if (customToken.credentialTypes) {
+      const unknown = customToken.credentialTypes.filter(
+        (t) => !canonicalCredentialTypes.includes(t),
+      )
+      if (unknown.length) {
+        throw new Error(
+          `customToken.credentialTypes contains unknown values: ${unknown.join(', ')}. ` +
+            `Supported: ${canonicalCredentialTypes.join(', ')}.`,
+        )
+      }
+    }
     allowedTypes = customToken.credentialTypes ?? defaults
     if (isNative && allowedTypes.some((t) => t !== 'hash')) {
       throw new Error(
