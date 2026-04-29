@@ -106,8 +106,9 @@ To avoid the limit entirely, pass your own `rpcUrl` from any QuickNode plan.
 | `chain` | ✓ | — | `'base' \| 'ethereum' \| 'arbitrum' \| 'polygon' \| 'optimism' \| 'avalanche' \| 'linea' \| 'unichain' \| 'base-sepolia'` |
 | `rpcUrl` | — | — | Defaults to QuickNode public endpoint for the chain. Rate-limited per IP. |
 | `submitter` | when `credentialTypes` contains `permit2`/`authorization` | — | `{ privateKey }` or `{ account }` |
-| `credentialTypes` | | `['permit2','authorization','hash']` | Draft-ordered preference list |
-| `token` | | `'USDC'` | Only USDC supported in v0.1 |
+| `credentialTypes` | | per-token allowed set | Draft-ordered preference list |
+| `token` | | `'USDC'` | Curated symbol: `USDC \| EURC \| WETH \| USDT`. Mutually exclusive with `customToken`. |
+| `customToken` | | — | Caller-supplied `{ address, decimals, symbol?, name?, version?, credentialTypes? }`. Use for any ERC-20 by address, or for native (zero-address). See below. |
 | `confirmations` | | per-chain default | Block-depth check for `hash` credential |
 | `store` | | `Store.memory()` | Any mppx `AtomicStore` (Cloudflare KV, Redis, Upstash) |
 
@@ -132,6 +133,68 @@ await walletClient.writeContract({
   args: ['0x000000000022D473030F116dDEE9F6B43aC78BA3', 2n ** 256n - 1n],
 })
 ```
+
+### Custom tokens & native settlement
+
+Pass `customToken` instead of `token` to settle in any ERC-20 by address, or
+in the chain's native coin (ETH / MATIC / AVAX / …):
+
+```ts
+// Any ERC-20 by address — e.g. DAI on mainnet
+import { evm } from '@quicknode/mpp/server'
+
+evm.charge({
+  chain: 'ethereum',
+  recipient,
+  submitter: { privateKey: SUBMITTER_PK },
+  customToken: {
+    address: '0x6B175474E89094C44Da98b954EedeAC495271d0F', // DAI
+    decimals: 18,
+    symbol: 'DAI',
+  },
+})
+```
+
+```ts
+// Native chain coin — set address to NATIVE_TOKEN_ADDRESS (zero address)
+import { evm, NATIVE_TOKEN_ADDRESS } from '@quicknode/mpp/server'
+
+evm.charge({
+  chain: 'base',
+  recipient,
+  customToken: {
+    address: NATIVE_TOKEN_ADDRESS,
+    decimals: 18,
+    symbol: 'ETH',
+  },
+  // No `submitter` needed — native settlement only supports the `hash`
+  // credential, which the client broadcasts itself.
+})
+```
+
+`customToken` fields:
+
+| Field | Required | Notes |
+|---|---|---|
+| `address` | ✓ | ERC-20 contract address. Use `NATIVE_TOKEN_ADDRESS` for the chain's native coin. |
+| `decimals` | ✓ | 18 for native ETH / MATIC / AVAX. |
+| `symbol` | | Display only. |
+| `name`, `version` | | EIP-712 domain values. Pass these for `authorization` (EIP-3009) when the token's on-chain `name()` / `version()` reverts or differs from its EIP-712 domain. |
+| `credentialTypes` | | Defaults: `['permit2','hash']` for ERC-20, `['hash']` for native. |
+
+Defaults intentionally exclude `authorization` for custom ERC-20s: only Circle
+FiatTokens (USDC, EURC) implement EIP-3009 reliably. Opt in by passing
+`credentialTypes: ['authorization', ...]` if your token implements it.
+
+Native settlement is restricted to the `hash` credential and to direct EOA
+sends — `tx.input === '0x'`, `tx.to === recipient`, `tx.value === amount`.
+Contract-mediated native transfers aren't accepted by the verifier.
+
+> **Spec note**: native settlement (zero-address `currency`) is a
+> non-normative extension to
+> [`draft-evm-charge-00`](https://github.com/tempoxyz/mpp-specs/blob/main/specs/methods/evm/draft-evm-charge-00.md),
+> which scopes itself to ERC-20 transfers. Custom ERC-20 addresses are
+> spec-compliant — the spec defines `currency` as a 20-byte hex string.
 
 ## Live testing on Base Sepolia
 

@@ -1,6 +1,8 @@
 import { charge } from './Charge.js'
 
+export { NATIVE_TOKEN_ADDRESS } from '../constants.js'
 export { QuickNodeRateLimitError } from '../errors.js'
+export type { CustomTokenConfig } from '../types.js'
 export { charge }
 export const evm = { charge }
 export { Expires, Mppx, Store } from 'mppx/server'

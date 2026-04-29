@@ -6,6 +6,7 @@ import {
   DEFAULT_CONFIRMATIONS,
   defaultRpcUrl,
   ERC20_ABI,
+  NATIVE_TOKEN_ADDRESS,
   PERMIT2_ADDRESS,
   type SupportedToken,
   TOKEN_CONTRACTS,
@@ -53,21 +54,56 @@ export function charge(parameters: ServerParameters) {
     confirmations: confirmationsInput,
     store: storeInput,
     submitter,
+    customToken,
   } = parameters
-  const tokenSymbol: SupportedToken = parameters.token ?? 'USDC'
-  const tokenAddress = TOKEN_CONTRACTS[tokenSymbol]?.[chain]
-  if (!tokenAddress) {
-    const supportedOnChain = (Object.keys(TOKEN_CONTRACTS) as SupportedToken[])
-      .filter((t) => TOKEN_CONTRACTS[t][chain])
-      .join(', ')
-    throw new Error(
-      `${tokenSymbol} is not deployed on ${chain}. Supported tokens for this chain: ${
-        supportedOnChain || '(none)'
-      }`,
-    )
+
+  if (parameters.token && customToken) {
+    throw new Error('evm.charge: pass either `token` or `customToken`, not both.')
   }
-  const tokenDecimals = TOKEN_DECIMALS[tokenSymbol]
-  const allowedTypes = TOKEN_CREDENTIAL_TYPES[tokenSymbol]
+
+  let tokenAddress: Address
+  let tokenDecimals: number
+  let tokenLabel: string
+  let allowedTypes: readonly CredentialType[]
+  let isNative: boolean
+  let nameOverride: string | undefined
+  let versionOverride: string | undefined
+
+  if (customToken) {
+    tokenAddress = getAddress(customToken.address)
+    tokenDecimals = customToken.decimals
+    tokenLabel = customToken.symbol ?? tokenAddress
+    isNative = tokenAddress === getAddress(NATIVE_TOKEN_ADDRESS)
+    const defaults: readonly CredentialType[] = isNative ? ['hash'] : ['permit2', 'hash']
+    allowedTypes = customToken.credentialTypes ?? defaults
+    if (isNative && allowedTypes.some((t) => t !== 'hash')) {
+      throw new Error(
+        "Native token (zero address) only supports the 'hash' credential. " +
+          'Remove non-hash entries from credentialTypes.',
+      )
+    }
+    nameOverride = customToken.name
+    versionOverride = customToken.version
+  } else {
+    const tokenSymbol: SupportedToken = parameters.token ?? 'USDC'
+    const curatedAddress = TOKEN_CONTRACTS[tokenSymbol]?.[chain]
+    if (!curatedAddress) {
+      const supportedOnChain = (Object.keys(TOKEN_CONTRACTS) as SupportedToken[])
+        .filter((t) => TOKEN_CONTRACTS[t][chain])
+        .join(', ')
+      throw new Error(
+        `${tokenSymbol} is not deployed on ${chain}. Supported tokens for this chain: ${
+          supportedOnChain || '(none)'
+        }`,
+      )
+    }
+    tokenAddress = getAddress(curatedAddress)
+    tokenDecimals = TOKEN_DECIMALS[tokenSymbol]
+    tokenLabel = tokenSymbol
+    allowedTypes = TOKEN_CREDENTIAL_TYPES[tokenSymbol]
+    isNative = false
+  }
+
   // When the caller omits `credentialTypes`, default to the per-token allowed
   // set rather than the universal one. Otherwise tokens like WETH and USDT —
   // which lack EIP-3009 — would throw on every zero-config construction
@@ -76,8 +112,8 @@ export function charge(parameters: ServerParameters) {
   const invalidTypes = acceptedTypes.filter((t) => !allowedTypes.includes(t))
   if (invalidTypes.length) {
     throw new Error(
-      `${tokenSymbol} does not support credential types: ${invalidTypes.join(', ')}. ` +
-        `Supported on ${tokenSymbol}: ${allowedTypes.join(', ')}.`,
+      `${tokenLabel} does not support credential types: ${invalidTypes.join(', ')}. ` +
+        `Supported on ${tokenLabel}: ${allowedTypes.join(', ')}.`,
     )
   }
   const chainId = CHAIN_IDS[chain]
@@ -132,7 +168,10 @@ export function charge(parameters: ServerParameters) {
     return tokenMetadata
   }
 
-  const needsMetadata = acceptedTypes.includes('authorization')
+  // Native cannot use authorization (no EIP-3009 for native value transfers),
+  // and we already rejected non-hash credentialTypes for native above. Skip
+  // the on-chain metadata probe entirely for native — there is no contract.
+  const needsMetadata = !isNative && acceptedTypes.includes('authorization')
 
   return Method.toServer(chargeMethod, {
     defaults: {
@@ -141,7 +180,13 @@ export function charge(parameters: ServerParameters) {
       recipient,
     },
     async request({ request }) {
-      const metadata = needsMetadata ? await getTokenMetadata().catch(() => undefined) : undefined
+      // Caller-supplied overrides win over on-chain reads. Useful for tokens
+      // whose `name()`/`version()` reverts or whose EIP-712 domain values
+      // differ from their ERC-20 metadata.
+      const probeMetadata =
+        needsMetadata && !(nameOverride && versionOverride)
+          ? await getTokenMetadata().catch(() => undefined)
+          : undefined
       return {
         ...request,
         chainId: request.chainId ?? chainId,
@@ -154,8 +199,8 @@ export function charge(parameters: ServerParameters) {
           (acceptedTypes.includes('permit2') && walletClient?.account?.address
             ? walletClient.account.address
             : undefined),
-        tokenName: request.tokenName ?? metadata?.name,
-        tokenVersion: request.tokenVersion ?? metadata?.version,
+        tokenName: request.tokenName ?? nameOverride ?? probeMetadata?.name,
+        tokenVersion: request.tokenVersion ?? versionOverride ?? probeMetadata?.version,
       }
     },
     async verify({ credential, request }) {

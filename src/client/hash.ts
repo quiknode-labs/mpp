@@ -1,5 +1,18 @@
-import { type Account, createPublicClient, createWalletClient, type Hex, http } from 'viem'
-import { CHAIN_IDS, defaultRpcUrl, ERC20_ABI, type SupportedChain } from '../constants.js'
+import {
+  type Account,
+  createPublicClient,
+  createWalletClient,
+  getAddress,
+  type Hex,
+  http,
+} from 'viem'
+import {
+  CHAIN_IDS,
+  defaultRpcUrl,
+  ERC20_ABI,
+  NATIVE_TOKEN_ADDRESS,
+  type SupportedChain,
+} from '../constants.js'
 import { getViemChainById } from '../internal/chain.js'
 import { defaultTransport } from '../internal/transport.js'
 import type { HashPayload } from '../types.js'
@@ -39,14 +52,22 @@ export async function createHashCredential(parameters: {
   const walletClient = createWalletClient({ account, chain, transport })
   const publicClient = createPublicClient({ chain, transport })
 
-  const txHash = await walletClient.writeContract({
-    address: tokenAddress,
-    abi: ERC20_ABI,
-    functionName: 'transfer',
-    args: [recipient, amount],
-    account,
-    chain,
-  })
+  const isNative = getAddress(tokenAddress) === getAddress(NATIVE_TOKEN_ADDRESS)
+  const txHash = isNative
+    ? await walletClient.sendTransaction({
+        to: recipient,
+        value: amount,
+        account,
+        chain,
+      })
+    : await walletClient.writeContract({
+        address: tokenAddress,
+        abi: ERC20_ABI,
+        functionName: 'transfer',
+        args: [recipient, amount],
+        account,
+        chain,
+      })
   await publicClient.waitForTransactionReceipt({ hash: txHash })
   return { type: 'hash', txHash, chainId }
 }
