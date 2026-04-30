@@ -14,6 +14,9 @@ with all three non-trivial credential types:
 | `authorization`         | Strong (on-chain nonce)          | Server pays | One signature, USDC / EIP-3009 tokens |
 | `hash`                  | Weakest (post-hoc receipt match) | Client pays | Client broadcasts + waits             |
 
+> [!CAUTION]
+> The `hash` credential is **post-hoc receipt matching only** — it binds nothing to the specific challenge. Any historical Transfer to the recipient that matches the requested token + amount can be claimed as proof of payment, once each. To narrow the replay window, set `maxReceiptAgeSeconds` on the server (see [Configuration](#configuration)). Even then, concurrent third-party payments to the same recipient for the same amount within the window can still leak through. For payments where stronger binding matters, prefer `permit2` or `authorization`.
+
 ## Contents
 
 - [Install](#install)
@@ -135,6 +138,7 @@ To avoid the limit entirely, pass your own `rpcUrl` from any Quicknode plan.
 | `token`           |                                                           | `'USDC'`              | Curated symbol: `USDC \| EURC \| WETH \| USDT`. Mutually exclusive with `customToken`.                                                                       |
 | `customToken`     |                                                           | —                     | Caller-supplied `{ address, decimals, symbol?, name?, version?, credentialTypes? }`. Use for any ERC-20 by address, or for native (zero-address). See below. |
 | `confirmations`   |                                                           | per-chain default     | Block-depth check for `hash` credential                                                                                                                      |
+| `maxReceiptAgeSeconds` |                                                      | —                     | If set, rejects `hash` credentials whose receipt block is older than N seconds at verification time. Closes the historical-Transfer-replay class. Recommended ≥ slowest expected confirmation window (e.g. 600 for L1, 60 for fast L2). |
 | `store`           |                                                           | `Store.memory()`      | Any mppx `AtomicStore` (Cloudflare KV, Redis, Upstash)                                                                                                       |
 
 ### `evm.charge` (client)

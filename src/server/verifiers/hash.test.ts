@@ -42,12 +42,14 @@ function stubClient(parameters: {
   receiptBlock?: bigint
   latestBlock?: bigint
   logs?: ReturnType<typeof buildTransferLog>[]
+  blockTimestamp?: bigint
 }): PublicClient {
   const {
     receiptStatus = 'success',
     receiptBlock = 100n,
     latestBlock = 110n,
     logs = [buildTransferLog({})],
+    blockTimestamp = BigInt(Math.floor(Date.now() / 1000)),
   } = parameters
   return {
     getTransactionReceipt: async () => ({
@@ -57,6 +59,7 @@ function stubClient(parameters: {
       transactionHash: TX_HASH,
     }),
     getBlockNumber: async () => latestBlock,
+    getBlock: async () => ({ timestamp: blockTimestamp }),
   } as unknown as PublicClient
 }
 
@@ -183,6 +186,79 @@ test('verifyHash replay-rejects the same txHash on second call', async () => {
     }),
     /already been used/i,
   )
+})
+
+test('verifyHash without maxReceiptAgeSeconds accepts a years-old receipt (current behavior preserved)', async () => {
+  const store = Store.memory() as ChargeStore
+  const ancientTimestamp = BigInt(Math.floor(Date.now() / 1000) - 3 * 365 * 24 * 60 * 60)
+  const receipt = await verifyHash({
+    payload: { type: 'hash', txHash: TX_HASH, chainId: 84532 },
+    request: baseRequest(),
+    client: stubClient({ blockTimestamp: ancientTimestamp }),
+    store,
+    confirmations: 1,
+    expectedChainId: 84532,
+  })
+  assert.equal(receipt.status, 'success')
+})
+
+test('verifyHash with maxReceiptAgeSeconds accepts a fresh receipt within the window', async () => {
+  const store = Store.memory() as ChargeStore
+  const fiveSecondsAgo = BigInt(Math.floor(Date.now() / 1000) - 5)
+  const receipt = await verifyHash({
+    payload: { type: 'hash', txHash: TX_HASH, chainId: 84532 },
+    request: baseRequest(),
+    client: stubClient({ blockTimestamp: fiveSecondsAgo }),
+    store,
+    confirmations: 1,
+    expectedChainId: 84532,
+    maxReceiptAgeSeconds: 600,
+  })
+  assert.equal(receipt.status, 'success')
+})
+
+test('verifyHash with maxReceiptAgeSeconds rejects a receipt older than the window', async () => {
+  const store = Store.memory() as ChargeStore
+  const tooOld = BigInt(Math.floor(Date.now() / 1000) - 3600)
+  await assert.rejects(
+    verifyHash({
+      payload: { type: 'hash', txHash: TX_HASH, chainId: 84532 },
+      request: baseRequest(),
+      client: stubClient({ blockTimestamp: tooOld }),
+      store,
+      confirmations: 1,
+      expectedChainId: 84532,
+      maxReceiptAgeSeconds: 600,
+    }),
+    /maxReceiptAgeSeconds/i,
+  )
+})
+
+test('verifyHash releases reservation when maxReceiptAgeSeconds rejects, so a later fresh retry works', async () => {
+  const store = Store.memory() as ChargeStore
+  const tooOld = BigInt(Math.floor(Date.now() / 1000) - 3600)
+  await assert.rejects(
+    verifyHash({
+      payload: { type: 'hash', txHash: TX_HASH, chainId: 84532 },
+      request: baseRequest(),
+      client: stubClient({ blockTimestamp: tooOld }),
+      store,
+      confirmations: 1,
+      expectedChainId: 84532,
+      maxReceiptAgeSeconds: 600,
+    }),
+  )
+  const fresh = BigInt(Math.floor(Date.now() / 1000) - 5)
+  const receipt = await verifyHash({
+    payload: { type: 'hash', txHash: TX_HASH, chainId: 84532 },
+    request: baseRequest(),
+    client: stubClient({ blockTimestamp: fresh }),
+    store,
+    confirmations: 1,
+    expectedChainId: 84532,
+    maxReceiptAgeSeconds: 600,
+  })
+  assert.equal(receipt.status, 'success')
 })
 
 test('verifyHash releases reservation on rejection (so a later valid retry works)', async () => {

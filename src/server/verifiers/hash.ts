@@ -17,8 +17,10 @@ export async function verifyHash(parameters: {
   store: ChargeStore
   confirmations: number
   expectedChainId: number
+  maxReceiptAgeSeconds?: number | undefined
 }): Promise<Receipt.Receipt> {
-  const { payload, request, client, store, confirmations, expectedChainId } = parameters
+  const { payload, request, client, store, confirmations, expectedChainId, maxReceiptAgeSeconds } =
+    parameters
   const { txHash, chainId } = payload
   const { amount, currency, recipient, externalId } = request
 
@@ -88,6 +90,16 @@ export async function verifyHash(parameters: {
       throw new Errors.VerificationFailedError({
         reason: `Insufficient confirmations: ${depth}/${confirmations}`,
       })
+    }
+
+    if (maxReceiptAgeSeconds !== undefined) {
+      const block = await client.getBlock({ blockNumber: receipt.blockNumber })
+      const ageSec = Math.floor(Date.now() / 1000) - Number(block.timestamp)
+      if (ageSec > maxReceiptAgeSeconds) {
+        throw new Errors.VerificationFailedError({
+          reason: `Receipt is ${ageSec}s old; exceeds maxReceiptAgeSeconds=${maxReceiptAgeSeconds}`,
+        })
+      }
     }
 
     return Receipt.from({

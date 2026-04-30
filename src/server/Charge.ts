@@ -56,6 +56,7 @@ export function charge(parameters: ServerParameters) {
     store: storeInput,
     submitter,
     customToken,
+    maxReceiptAgeSeconds,
   } = parameters
 
   if (parameters.token && customToken) {
@@ -260,6 +261,7 @@ export function charge(parameters: ServerParameters) {
           store,
           confirmations,
           expectedChainId: chainId,
+          maxReceiptAgeSeconds,
         })
       }
 
