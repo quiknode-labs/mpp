@@ -118,6 +118,24 @@ export type ServerParameters = {
   store?: import('mppx').Store.AtomicStore<ChargeReplayItemMap>
   /** Block confirmations required for the hash credential. @default per-chain value in DEFAULT_CONFIRMATIONS */
   confirmations?: number
+  /**
+   * Reject `hash` credentials whose on-chain receipt is older than this many
+   * seconds at verification time (block timestamp vs `Date.now()`).
+   *
+   * Without this set, the verifier accepts any historical Transfer to the
+   * recipient that matches token + amount — including transfers that
+   * occurred long before the challenge was issued, since the credential
+   * binds nothing to the specific challenge. Setting a window closes that
+   * historical-replay class.
+   *
+   * Pick a value larger than your slowest expected confirmation window
+   * (e.g. ≥ 600s for L1 mainnet at 12 confirmations, ~60s for fast L2s).
+   * Too tight rejects legitimate payments that took unusually long to
+   * confirm; too loose widens the replay window.
+   *
+   * @default undefined (no age limit)
+   */
+  maxReceiptAgeSeconds?: number
 }
 
 export type ClientParameters = {
