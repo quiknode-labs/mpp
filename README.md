@@ -1,8 +1,11 @@
 # @quicknode/mpp
 
-First-party MPP payment method for EVM-settled payments, verified via QuickNode RPC.
+> [!WARNING]
+> **Beta.** Public API may change between minor versions until v1. Pin to an exact version in production.
 
-Implements IETF [`draft-evm-charge-00`](https://github.com/tempoxyz/mpp-specs/blob/main/specs/methods/evm/draft-evm-charge-00.md)
+First-party MPP payment method for EVM-settled payments, verified via QuickNode RPC. Gate any HTTP endpoint behind a stablecoin (or native-coin) payment — agents pay with one signature, the server verifies on-chain, and the request is forwarded. Built for the [Machine Payments Protocol](https://github.com/tempoxyz/mpp-specs).
+
+Implements IETF [`draft-evm-charge-00`](https://github.com/tempoxyz/mpp-specs/blob/2f6bfcee6f9e448d2ded15dc350dc92967e17513/specs/methods/evm/draft-evm-charge-00.md)
 with all three non-trivial credential types:
 
 | Type | Binding | Gas | UX |
@@ -11,11 +14,33 @@ with all three non-trivial credential types:
 | `authorization` | Strong (on-chain nonce) | Server pays | One signature, USDC / EIP-3009 tokens |
 | `hash` | Weakest (post-hoc receipt match) | Client pays | Client broadcasts + waits |
 
+## Contents
+
+- [Install](#install)
+- [Compatibility](#compatibility)
+- [Server — accept payments](#server--accept-payments)
+- [Client — pay for content](#client--pay-for-content)
+- [Rate limits](#rate-limits)
+- [Configuration](#configuration)
+- [Live testing on Base Sepolia](#live-testing-on-base-sepolia)
+- [Versioning](#versioning)
+- [Changelog](#changelog)
+- [Contributing](#contributing)
+- [Security](#security)
+- [License](#license)
+
 ## Install
 
 ```bash
 npm install @quicknode/mpp mppx viem
 ```
+
+## Compatibility
+
+- **Node.js** ≥ 22
+- **Cloudflare Workers**, **Bun**, and other WebCrypto-capable runtimes
+- **Browsers** — the client (`@quicknode/mpp/client`) runs in-browser for agent UIs. The server modules import Node-only code and are not browser-bundleable
+- **TypeScript** — types ship in the package; no separate `@types/*` install needed
 
 ## Server — accept payments
 
@@ -192,7 +217,7 @@ Contract-mediated native transfers aren't accepted by the verifier.
 
 > **Spec note**: native settlement (zero-address `currency`) is a
 > non-normative extension to
-> [`draft-evm-charge-00`](https://github.com/tempoxyz/mpp-specs/blob/main/specs/methods/evm/draft-evm-charge-00.md),
+> [`draft-evm-charge-00`](https://github.com/tempoxyz/mpp-specs/blob/2f6bfcee6f9e448d2ded15dc350dc92967e17513/specs/methods/evm/draft-evm-charge-00.md),
 > which scopes itself to ERC-20 transfers. Custom ERC-20 addresses are
 > spec-compliant — the spec defines `currency` as a 20-byte hex string.
 
@@ -221,6 +246,29 @@ MPP_INTEGRATION=1 npm test -- --test-name-pattern "public rpc"
 ```
 
 Runs one `getChainId` call per supported chain. Requires real `PUBLIC_RPC_PREFIX`/`PUBLIC_RPC_TOKEN` values in `src/constants.ts`.
+
+## Versioning
+
+This package follows [SemVer](https://semver.org/) with a beta caveat:
+
+- **Until 1.0**, minor versions may include breaking changes when [`draft-evm-charge-00`](https://github.com/tempoxyz/mpp-specs/blob/2f6bfcee6f9e448d2ded15dc350dc92967e17513/specs/methods/evm/draft-evm-charge-00.md) evolves or the public API needs to change. Pin an exact version in production.
+- **Public API** = everything exported from `@quicknode/mpp`, `@quicknode/mpp/server`, `@quicknode/mpp/client`, their submodules, and `@quicknode/mpp/constants`. Anything under `internal/` is private and may change without notice.
+
+## Changelog
+
+See [GitHub Releases](https://github.com/quiknode-labs/mpp/releases) for per-version changes.
+
+## Contributing
+
+Issues and PRs welcome at [quiknode-labs/mpp](https://github.com/quiknode-labs/mpp). Before opening a PR:
+
+```bash
+npm run verify   # lint + typecheck + tests + build
+```
+
+## Security
+
+Found a vulnerability? Please email security@quicknode.com instead of opening a public issue.
 
 ## License
 
