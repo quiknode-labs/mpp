@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict'
 import { afterEach, beforeEach, test } from 'node:test'
-import { QuickNodeRateLimitError } from '../errors.js'
+import { QuicknodeRateLimitError } from '../errors.js'
 import { getPublicClient } from './rpc.js'
 
 type FetchFn = typeof globalThis.fetch
@@ -25,7 +25,7 @@ afterEach(() => {
   globalThis.fetch = originalFetch
 })
 
-test('user-supplied rpcUrl: 429 surfaces as viem HttpRequestError, NOT QuickNodeRateLimitError', async () => {
+test('user-supplied rpcUrl: 429 surfaces as viem HttpRequestError, NOT QuicknodeRateLimitError', async () => {
   globalThis.fetch = mockFetch(new Response('Too Many Requests', { status: 429 }))
 
   const client = getPublicClient({
@@ -38,7 +38,7 @@ test('user-supplied rpcUrl: 429 surfaces as viem HttpRequestError, NOT QuickNode
     () => client.getChainId(),
     (err: unknown) => {
       assert.ok(err instanceof Error, 'is an Error')
-      assert.ok(!(err instanceof QuickNodeRateLimitError), 'is NOT QuickNodeRateLimitError')
+      assert.ok(!(err instanceof QuicknodeRateLimitError), 'is NOT QuicknodeRateLimitError')
       return true
     },
   )

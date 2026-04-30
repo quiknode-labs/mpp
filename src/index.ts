@@ -5,7 +5,7 @@ export {
   TOKEN_CREDENTIAL_TYPES,
   TOKEN_DECIMALS,
 } from './constants.js'
-export { QuickNodeRateLimitError } from './errors.js'
+export { QuicknodeRateLimitError } from './errors.js'
 export { charge } from './Methods.js'
 export type {
   AuthorizationPayload,

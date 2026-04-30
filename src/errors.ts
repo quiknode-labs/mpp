@@ -8,7 +8,7 @@ const UPGRADE_URL = 'https://www.quicknode.com/?utm_source=mpp-sdk&utm_medium=ra
  * Only emitted when the SDK is using its default transport — requests through a
  * user-supplied `rpcUrl` surface the underlying viem `HttpRequestError` unchanged.
  */
-export class QuickNodeRateLimitError extends Error {
+export class QuicknodeRateLimitError extends Error {
   readonly code = 'QUICKNODE_RATE_LIMITED' as const
   readonly upgradeUrl = UPGRADE_URL
   readonly chain: SupportedChain
@@ -17,10 +17,10 @@ export class QuickNodeRateLimitError extends Error {
   constructor(chain: SupportedChain, retryAfterSeconds?: number) {
     const suffix = retryAfterSeconds !== undefined ? ` (retry after ${retryAfterSeconds}s)` : ''
     super(
-      `QuickNode public RPC rate limit hit on ${chain}. ` +
+      `Quicknode public RPC rate limit hit on ${chain}. ` +
         `Upgrade to a dedicated endpoint at ${UPGRADE_URL}${suffix}`,
     )
-    this.name = 'QuickNodeRateLimitError'
+    this.name = 'QuicknodeRateLimitError'
     this.chain = chain
     this.retryAfterSeconds = retryAfterSeconds
   }

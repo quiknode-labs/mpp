@@ -1,6 +1,6 @@
 /**
  * Fires requests in a loop against the SDK's default public RPC until
- * it hits a 429, then prints the resulting QuickNodeRateLimitError to
+ * it hits a 429, then prints the resulting QuicknodeRateLimitError to
  * validate the upgrade CTA copy.
  *
  * Usage: npx tsx scripts/rate-limit-demo.ts [chain]
@@ -11,7 +11,7 @@
 
 import { createPublicClient } from 'viem'
 import { type SupportedChain, defaultRpcUrl } from '../src/constants.js'
-import { QuickNodeRateLimitError } from '../src/errors.js'
+import { QuicknodeRateLimitError } from '../src/errors.js'
 import { getViemChain } from '../src/internal/chain.js'
 import { defaultTransport } from '../src/internal/transport.js'
 
@@ -30,7 +30,7 @@ while (true) {
   try {
     await client.getChainId()
   } catch (err) {
-    if (err instanceof QuickNodeRateLimitError) {
+    if (err instanceof QuicknodeRateLimitError) {
       const elapsed = ((Date.now() - start) / 1000).toFixed(1)
       console.log(`\n✖ Rate-limited after ${i} requests in ${elapsed}s\n`)
       console.log('Error:', err.message)
