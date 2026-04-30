@@ -69,7 +69,7 @@ const payer = privateKeyToAccount(PAYER_PK)
 const submitter = SUBMITTER_PK ? privateKeyToAccount(SUBMITTER_PK) : undefined
 
 const EFFECTIVE_RPC = useDefaultRpc ? defaultRpcUrl('base-sepolia') : (RPC_URL as string)
-console.log(`▶ RPC: ${useDefaultRpc ? 'QuickNode public (default)' : 'custom'}`)
+console.log(`▶ RPC: ${useDefaultRpc ? 'Quicknode public (default)' : 'custom'}`)
 
 const CHAIN_ID = CHAIN_IDS['base-sepolia']
 const TOKEN = USDC_CONTRACTS['base-sepolia']

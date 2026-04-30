@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict'
 import { afterEach, beforeEach, test } from 'node:test'
 import { createPublicClient } from 'viem'
-import { QuickNodeRateLimitError } from '../errors.js'
+import { QuicknodeRateLimitError } from '../errors.js'
 import { getViemChain } from './chain.js'
 import { defaultTransport, logDefaultTransportOnce, resetDefaultTransportLog } from './transport.js'
 
@@ -48,7 +48,7 @@ test('defaultTransport attaches telemetry headers on every request', async () =>
   assert.match(headers.get('user-agent') ?? '', /^@quicknode\/mpp\/.+\(chain=base\)$/)
 })
 
-test('defaultTransport converts 429 into QuickNodeRateLimitError', async () => {
+test('defaultTransport converts 429 into QuicknodeRateLimitError', async () => {
   globalThis.fetch = mockFetch(
     new Response('Too Many Requests', {
       status: 429,
@@ -64,7 +64,7 @@ test('defaultTransport converts 429 into QuickNodeRateLimitError', async () => {
   await assert.rejects(
     () => client.getChainId(),
     (err: unknown) => {
-      assert.ok(err instanceof QuickNodeRateLimitError)
+      assert.ok(err instanceof QuicknodeRateLimitError)
       assert.equal(err.chain, 'optimism')
       assert.equal(err.retryAfterSeconds, 42)
       return true
@@ -88,7 +88,7 @@ test('defaultTransport passes 500s through unchanged', async () => {
     () => client.getChainId(),
     (err: unknown) => {
       assert.ok(err instanceof Error)
-      assert.ok(!(err instanceof QuickNodeRateLimitError))
+      assert.ok(!(err instanceof QuicknodeRateLimitError))
       return true
     },
   )
@@ -104,7 +104,7 @@ test('defaultTransport handles 429 without Retry-After header', async () => {
   await assert.rejects(
     () => client.getChainId(),
     (err: unknown) => {
-      assert.ok(err instanceof QuickNodeRateLimitError)
+      assert.ok(err instanceof QuicknodeRateLimitError)
       assert.equal(err.retryAfterSeconds, undefined)
       return true
     },

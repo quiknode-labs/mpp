@@ -178,7 +178,7 @@ export const TRANSFER_EVENT_TOPIC =
   '0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef' as const
 
 /**
- * Pre-provisioned QuickNode endpoint used when the SDK is configured without
+ * Pre-provisioned Quicknode endpoint used when the SDK is configured without
  * an explicit rpcUrl. Rate-limited per IP. See README for upgrade path.
  */
 export const PUBLIC_RPC_PREFIX = 'dimensional-red-surf'
@@ -212,7 +212,7 @@ export const CHAIN_PATH_SUFFIXES: Partial<Record<SupportedChain, string>> = {
 }
 
 /**
- * Known QuickNode path suffixes for chains not yet in `SupportedChain`.
+ * Known Quicknode path suffixes for chains not yet in `SupportedChain`.
  * Keep these wired up so adding the chain later is a one-line change in
  * `CHAIN_PATH_SUFFIXES`. Not referenced by runtime code today.
  */

@@ -78,7 +78,7 @@ export type ServerParameters = {
   /** Merchant wallet that receives the USDC transfer. */
   recipient: Address
   /**
-   * RPC endpoint URL. If omitted, defaults to QuickNode's public shared endpoint
+   * RPC endpoint URL. If omitted, defaults to Quicknode's public shared endpoint
    * for the given `chain`. The shared endpoint is rate-limited per IP; upgrade
    * at https://www.quicknode.com for a dedicated endpoint.
    */
