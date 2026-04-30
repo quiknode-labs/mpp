@@ -5,9 +5,19 @@
   "license": "MIT",
   "type": "module",
   "sideEffects": false,
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/quiknode-labs/mpp.git"
+  },
+  "homepage": "https://github.com/quiknode-labs/mpp#readme",
+  "bugs": {
+    "url": "https://github.com/quiknode-labs/mpp/issues"
+  },
+  "engines": {
+    "node": ">=22"
+  },
   "files": [
-    "dist",
-    "src"
+    "dist"
   ],
   "exports": {
     ".": {
