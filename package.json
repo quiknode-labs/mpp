@@ -1,6 +1,6 @@
 {
   "name": "@quicknode/mpp",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "QuickNode payment methods for MPP (Machine Payments Protocol)",
   "license": "MIT",
   "type": "module",
