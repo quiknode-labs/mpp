@@ -3,9 +3,9 @@
 > [!WARNING]
 > **Beta.** Public API may change between minor versions until v1. Pin to an exact version in production.
 
-First-party MPP payment method for EVM-settled payments, verified via QuickNode RPC. Gate any HTTP endpoint behind a stablecoin (or native-coin) payment — agents pay with one signature, the server verifies on-chain, and the request is forwarded. Built for the [Machine Payments Protocol](https://github.com/tempoxyz/mpp-specs).
+SDK for extending the MPP protocol with EVM-settled payments, verified via QuickNode RPC. Gate any HTTP endpoint behind a stablecoin (or native-coin) payment — agents pay with one signature, the server verifies on-chain, and the request is forwarded. Built for the [Machine Payments Protocol](https://github.com/tempoxyz/mpp-specs).
 
-Implements IETF [`draft-evm-charge-00`](https://github.com/tempoxyz/mpp-specs/blob/2f6bfcee6f9e448d2ded15dc350dc92967e17513/specs/methods/evm/draft-evm-charge-00.md)
+Implements and expands on the [`draft-evm-charge-00`](https://github.com/tempoxyz/mpp-specs/blob/2f6bfcee6f9e448d2ded15dc350dc92967e17513/specs/methods/evm/draft-evm-charge-00.md) spec
 with all three non-trivial credential types:
 
 | Type | Binding | Gas | UX |
