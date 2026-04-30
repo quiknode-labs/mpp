@@ -17,7 +17,10 @@
     "node": ">=22"
   },
   "files": [
-    "dist"
+    "dist",
+    "src",
+    "!src/**/*.test.ts",
+    "!src/__tests__"
   ],
   "exports": {
     ".": {
