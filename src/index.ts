@@ -1,5 +1,6 @@
 export type { SupportedChain, SupportedToken } from './constants.js'
 export {
+  CHAIN_IDS,
   NATIVE_TOKEN_ADDRESS,
   TOKEN_CONTRACTS,
   TOKEN_CREDENTIAL_TYPES,
